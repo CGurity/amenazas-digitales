@@ -76,19 +76,19 @@ case $retval in
       echo $argument
       echo "tshark -i br0 -a $argument -w nombre_archivo"
       STR=$(date +%Y-%m-%d-%H-%M)
-      folder=/home/pi/captures/$STR
+      folder=./captures/$STR
       mkdir $folder
       echo "Creating directory captures/$STR"
       echo "Making capture and storing it in captures/$STR/capture.pcap"
-      sudo tshark -i br0 -a $argument -w $folder/capture.pcap
-      FILES=/home/pi/analysis/*
+      sudo tshark -i wlx503eaa3a13e7 -a $argument -w $folder/capture.pcap
+      FILES=./analysis/*
       for f in $FILES
       do
         echo "Processing $f file..."
         # take action on each file. $f store current file name
         source $f
       done
-      chown -R pi:pi $folder
+      chown -R $SUDO_USER:$SUDO_USER $folder
     fi;;
   1)
     clear
