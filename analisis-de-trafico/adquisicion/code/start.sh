@@ -1,8 +1,10 @@
 #!/bin/bash
 if [[ $(id -u) -ne 0 ]] ; then echo "Please run as root" ; exit 1 ; fi
 
-DIALOG=${DIALOG=dialog}
+# ip link show | grep ": " | awk ' {print $2} '| tr -d ':' para listar las interfaces
 
+DIALOG=${DIALOG=dialog}
+interface = ""
 tempfile=`tempfile 2>/dev/null` || tempfile=/tmp/test$$
 trap "rm -f $tempfile" 0 1 2 5 15
 
@@ -49,6 +51,13 @@ case $retval in
           value=`cat $tempfile`
           argument=$autostop$value
           goon=1
+          clear
+          if ! [[ "$value" =~ ^[0-9]+$ ]]
+          then
+            clear
+            echo "Intenta de nuevo e introduce un valor entero"
+            goon=0
+          fi
           ;;
         1)
           clear
@@ -65,22 +74,40 @@ case $retval in
           ;;
       esac
     fi
-    clear
-    if ! [[ "$value" =~ ^[0-9]+$ ]]
-    then
-      clear
-      echo "Intenta de nuevo e introduce un valor entero"
-      goon=0
-    fi
     if [[ $goon == 1 ]]; then
+      # inicia interfaces
+      let i=0 # define counting variable
+      W=() # define working array
+      while read -r line; do # process file by file
+          let i=$i+1
+          W+=($line "")
+      done < <( ip link show | grep ": " | awk ' {print $2} '| tr -d ':' )
+      $DIALOG --clear --title "Captura de tráfico" \
+              --menu "Which interface do you want to use for the capture?" 20 51 4 \
+              "${W[@]}" 2> $tempfile
+
+      retval=$?
+
+      interface=`cat $tempfile`
+      case $retval in
+        0)
+          echo "'$interface' selected";;
+        1)
+          clear
+          echo "Cancel pressed. Start again the script and select an interface";;
+        255)
+          clear
+          echo "ESC pressed. Start again the script and select an interface";;
+      esac
+      # termina interfaces
       echo $argument
-      echo "tshark -i br0 -a $argument -w nombre_archivo"
+      echo "tshark -i $interface -a $argument -w nombre_archivo"
       STR=$(date +%Y-%m-%d-%H-%M)
       folder=./captures/$STR
       mkdir $folder
       echo "Creating directory captures/$STR"
       echo "Making capture and storing it in captures/$STR/capture.pcap"
-      sudo tshark -i wlx503eaa3a13e7 -a $argument -w $folder/capture.pcap
+      sudo tshark -i $interface -a $argument -w $folder/capture.pcap
       FILES=./analysis/*
       for f in $FILES
       do
