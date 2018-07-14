@@ -124,3 +124,4 @@ case $retval in
     clear
     echo "ESC pressed.";;
 esac
+s
