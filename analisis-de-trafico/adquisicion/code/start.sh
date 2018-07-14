@@ -101,7 +101,7 @@ case $retval in
       esac
       # termina interfaces
       echo $argument
-      echo "tshark -i $interface -a $argument -w nombre_archivo"
+      echo "tshark -i $interface -a $argument -w nombre_archivo" -Q
       STR=$(date +%Y-%m-%d-%H-%M)
       folder=./captures/$STR
       mkdir $folder
@@ -124,4 +124,3 @@ case $retval in
     clear
     echo "ESC pressed.";;
 esac
-s
